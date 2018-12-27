@@ -14,6 +14,6 @@ setup(name='hdf54bats',
         'numpy', 
         'pandas', 
         'h5py', 
-        'pytables', 
+        'tables', 
     ],
     zip_safe=False)
