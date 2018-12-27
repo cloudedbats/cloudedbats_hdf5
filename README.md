@@ -10,6 +10,17 @@ When working with large amounts of data it can be stored in the computer memory 
 
 HDF5, Hierarchical Data Format, is a file format used to store and access huge amounts of data in an hierarchical manner. HDF5 uses the file system to store data and can therefore handle data in the Terrabyte range. In CloudedBats the Python library PyTables is used to handle the HDF5 storage.
 
+## Installation
+
+    virtualenv venv
+    source venv/bin/activate
+    pip install tables
+    pip install h5py
+    pip install git+https://github.com/cloudedbats/cloudedbats_hdf5
+    
+    python
+    >>> import hdf54bats
+
 ## Contact
 
 Arnold Andreasson, Sweden.
