@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 # Project: http://cloudedbats.org
-# Copyright (c) 2018 Arnold Andreasson 
+# Copyright (c) 2018-2019 Arnold Andreasson 
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import pathlib
@@ -26,11 +26,14 @@ class Hdf5Wavefile(hdf5_base.Hdf5Base):
         if title == '':
             title = 'Wavefile: ' + name.capitalize().replace('_', ' ')
         #
-        self.add_array(parents=parents, node_name=name, node_title=title, array=array)
+        atom_int16 = tables.Int16Atom()
+        
+        self.add_array(parents=parents, array_name=name, array_title=title, array=array, )
+#                        atom=atom_int16)
     
     def remove_wavefile(self, nodepath=''):
         """ """
-        self.remove(nodepath=nodepath)
+        # self.remove(nodepath=nodepath)
     
     def get_user_metadata(self, nodepath=''):
         """ """

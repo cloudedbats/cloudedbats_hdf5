@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 # Project: http://cloudedbats.org
-# Copyright (c) 2018 Arnold Andreasson 
+# Copyright (c) 2018-2019 Arnold Andreasson 
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import pathlib
@@ -26,7 +26,7 @@ class Hdf5Event(hdf5_base.Hdf5Base):
         if title == '':
             title = 'Event: ' + name.capitalize().replace('_', ' ')
         #
-        self.create_group(parents=parents, node_name=name, node_title=title)
+        self.create_group(parents=parents, group_name=name, group_title=title)
     
     def remove_event(self, nodepath=''):
         """ """

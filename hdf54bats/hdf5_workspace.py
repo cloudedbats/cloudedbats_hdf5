@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 # Project: http://cloudedbats.org
-# Copyright (c) 2018 Arnold Andreasson 
+# Copyright (c) 2018-2019 Arnold Andreasson 
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import pathlib
@@ -11,23 +11,53 @@ class Hdf5Workspace():
     """ This class handles the workspace (directory)
         where the HDF5/PyTables files are stored.
     """
-    def __init__(self, workspace_path='hdf5_workspace'):
+    def __init__(self, workspace_path='workspace', create_ws=False):
         """ """
         self.workspace_path = workspace_path
-        # Create workspace if it does not exist.
-        ws_path = pathlib.Path(self.workspace_path)
-        ws_path.mkdir(parents=True, exist_ok=True)
+        if create_ws:
+            # Create workspace if it does not exist.
+            ws_path = pathlib.Path(self.workspace_path)
+            ws_path.mkdir(parents=True, exist_ok=True)
     
-    def get_hdf5_list(self):
+    def get_h5_list(self):
         """ """
-        h5_list = []
+        h5_dict = {}
         ws_path = pathlib.Path(self.workspace_path)
         for h5_file in ws_path.glob('*.h5'):
-            # print(h5_file)
-            h5_list.append(h5_file.name)
-        return h5_list
+            filepath = pathlib.Path(h5_file).resolve()
+            title = ''
+            h5 = tables.open_file(h5_file, 'r')
+            try:
+                title = h5.get_node_attr('/', 'TITLE')
+            finally:
+                h5.close()
+            h5_dict[h5_file.name] = {'name': h5_file.name, 
+                                     'title': title, 
+                                     'f5_filepath': filepath
+                                    }
+        return h5_dict
     
-    def check_hdf5_file(self, h5_name=None):
+    def get_h5_title(self, h5_name):
+        """ """
+        path = pathlib.Path(self.workspace_path, h5_name)
+        h5 = tables.open_file(path, 'r')
+        try:
+            title = h5.get_node_attr('/', 'TITLE')
+        finally:
+            h5.close()
+        return title
+    
+    def set_h5_title(self, h5_name, title):
+        """ """
+        path = pathlib.Path(self.workspace_path, h5_name)
+        h5 = tables.open_file(path, 'a')
+        try:
+            title = h5.set_node_attr('/', 'TITLE', title)
+        finally:
+            h5.close()
+        return title
+    
+    def check_h5_file(self, h5_name=None):
         """ """
         h5_path = pathlib.Path(self.workspace_path, h5_name)
         if h5_path.suffix != '.h5':
@@ -46,15 +76,23 @@ class Hdf5Workspace():
         except:
             return False
     
-    def create_hdf5(self, h5_name=None):
+    def create_h5(self, h5_name=None, title=''):
         """ """
         h5_path = pathlib.Path(self.workspace_path, h5_name)
         if h5_path.suffix != '.h5':
             h5_path = h5_path.with_suffix('.h5')
-        h5 = tables.open_file(h5_path, "w")
-        h5.close()
+        h5 = tables.open_file(h5_path, "a")
+        try:
+            if title:
+                h5.set_node_attr('/', 'TITLE', title)
+            else:
+                # Generate title if not defined.
+                title = 'Survey: ' + h5_name.capitalize().replace('_', ' ')
+                h5.set_node_attr('/', 'TITLE', title)
+        finally:
+            h5.close()
     
-    def delete_hdf5(self, h5_name=None):
+    def delete_h5(self, h5_name=None):
         """ """
         h5_path = pathlib.Path(self.workspace_path, h5_name)
         if h5_path.suffix != '.h5':
@@ -62,7 +100,7 @@ class Hdf5Workspace():
         if h5_path.exists():
             h5_path.unlink()
     
-    def copy_hdf5(self, from_h5_name=None, to_h5_name=None):
+    def copy_h5(self, from_h5_name=None, to_h5_name=None):
         """ """
         h5_src = pathlib.Path(self.workspace_path, from_h5_name)
         if h5_src.suffix != '.h5':
@@ -71,9 +109,9 @@ class Hdf5Workspace():
         if h5_dest.suffix != '.h5':
             h5_dest = h5_dest.with_suffix('.h5')
         #
-        h5_dest.write_bytes(h5_src.read_bytes())
+        tables.copy_file(h5_src, h5_dest)
     
-    def rename_hdf5(self, from_h5_name=None, to_h5_name=None):
+    def rename_h5(self, from_h5_name=None, to_h5_name=None):
         """ """
         h5_src = pathlib.Path(self.workspace_path, from_h5_name)
         if h5_src.suffix != '.h5':
@@ -92,23 +130,23 @@ if __name__ == '__main__':
     print('\nCloudedBats - HDF5 - test')
     ws = Hdf5Workspace(workspace_path='../workspace_test')
     time.sleep(1)
-    ws.create_hdf5('h5_test')
+    ws.create_h5('h5_test')
     time.sleep(1)
-    ws.copy_hdf5('h5_test', 'h5_test_1.hdf5')
+    ws.copy_h5('h5_test', 'h5_test_1.h5')
     time.sleep(1)
-    ws.rename_hdf5('h5_test_1', 'h5_test_2')
+    ws.rename_h5('h5_test_1', 'h5_test_2')
     time.sleep(1)
     print('\nCheck file: ')
-    print(' - Check: ', ws.check_hdf5_file('h5_test_2'))
+    print(' - Check: ', ws.check_h5_file('h5_test_2'))
     print('\nBefore delete: ')
-    for filename in ws.get_hdf5_list():
+    for filename in ws.get_h5_list():
         print(' - ', filename)
     time.sleep(1)
-    ws.delete_hdf5('h5_test')
+    ws.delete_h5('h5_test')
     time.sleep(1)
-    ws.delete_hdf5('h5_test_2.hdf5')
+    ws.delete_h5('h5_test_2.h5')
     print('\nAfter delete: ')
-    for filename in ws.get_hdf5_list():
+    for filename in ws.get_h5_list():
         print(' - ', filename)
 
     

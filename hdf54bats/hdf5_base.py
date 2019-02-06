@@ -1,18 +1,17 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 # Project: http://cloudedbats.org
-# Copyright (c) 2018 Arnold Andreasson 
+# Copyright (c) 2018-2019 Arnold Andreasson 
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import pathlib
-# import numpy as np
 import tables 
-# import h5py 
+import hdf54bats
 
 class Hdf5Base():
     """ Base functionality for a single HDF5 file. """
     
-    def __init__(self, h5_path='', h5_name=None):
+    def __init__(self, h5_path='', h5_name='hdf5'):
         """ """
         self.h5_path = pathlib.Path(h5_path, h5_name)
         if self.h5_path.suffix != '.h5':
@@ -24,7 +23,8 @@ class Hdf5Base():
         """ """
         mode = 'r' if read_only else 'a'
         try:
-            self.h5 = tables.open_file(self.h5_path, mode)
+            if self.h5 is None:
+                self.h5 = tables.open_file(self.h5_path, mode)
         except:
             self.h5 = None
     
@@ -52,10 +52,11 @@ class Hdf5Base():
         except:
             return False
     
-    def get_children(self, nodepath=''):
+    def get_children(self, nodepath='', close=True):
         """ """
         node_list = []
         nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
         try:
             self.open(read_only=True)
             nodes = self.h5.list_nodes(nodepath)
@@ -65,57 +66,80 @@ class Hdf5Base():
                 node_list.append(nodes)
                 print('DEBUG: node: ', node_name, '   First part:', nodes)
         finally:
-            self.close()
+            if close:
+                self.close()
         return node_list       
     
-    def create_group(self, parents='', node_name='', node_title=''):
+    def create_group(self, parents='', group_name='', group_title='', close=True):
         """ """
         parents = '/' + parents.replace('.', '/')
-        node_name = node_name.replace(' ', '_').lower()
+        parents = parents.replace('//', '/')
+        if group_name:
+            group_name = hdf54bats.str_to_ascii(group_name)
+        else:
+            group_name = hdf54bats.str_to_ascii(group_title)
         try:
             self.open(read_only=False)
-            self.h5.create_group(parents, node_name, node_title, createparents=False)
+            self.h5.create_group(parents, group_name, group_title, createparents=False)
         finally:
-            self.close()
+            if close:
+                self.close()
     
-    def add_dataset(self, parents='', node_name='', node_title=''):
+    def add_array(self, parents='', array_name='', array=None, 
+                  array_title='', atom=None, close=True):
         """ """
         parents = '/' + parents.replace('.', '/')
-        node_name = node_name.replace(' ', '_').lower()
+        parents = parents.replace('//', '/')
+        if array_name:
+            array_name = hdf54bats.str_to_ascii(array_name)
+        else:
+            array_name = hdf54bats.str_to_ascii(array_title)
+        try:
+            self.open(read_only=False)
+            self.h5.create_array(parents, array_name, array, 
+                                 title=array_title, atom=atom)
+        finally:
+            if close:
+                self.close()
+        
+    def add_dataset(self, parents='', dataset_name='', dataset_title='', close=True):
+        """ """
+        parents = '/' + parents.replace('.', '/')
+        parents = parents.replace('//', '/')
+        if dataset_name:
+            dataset_name = hdf54bats.str_to_ascii(dataset_name)
+        else:
+            dataset_name = hdf54bats.str_to_ascii(dataset_title)
         try:
             self.open(read_only=False)
             
             # TODO:
             
         finally:
-            self.close()
+            if close:
+                self.close()
     
-    def add_array(self, parents='', node_name='', node_title='', array=None):
+    def add_table(self, parents='', table_name='', table_title='', close=True):
         """ """
         parents = '/' + parents.replace('.', '/')
-        node_name = node_name.replace(' ', '_').lower()
-        try:
-            self.open(read_only=False)
-            self.h5.create_array(parents, node_name, array, title=node_title)
-        finally:
-            self.close()
-        
-    def add_table(self, parents='', node_name='', node_title=''):
-        """ """
-        parents = '/' + parents.replace('.', '/')
-        node_name = node_name.replace(' ', '_').lower()
+        if table_name:
+            table_name = hdf54bats.str_to_ascii(table_name)
+        else:
+            table_name = hdf54bats.str_to_ascii(table_title)
         try:
             self.open(read_only=False)
             
             # TODO:
                         
         finally:
-            self.close()
+            if close:
+                self.close()
     
-    def get_user_metadata(self, nodepath='', node_name=''):
+    def get_user_metadata(self, nodepath='', close=True):
         """ """
         metadata = {}
         nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
         try:
             self.open(read_only=False)
             node = self.h5.get_node(nodepath)
@@ -123,23 +147,27 @@ class Hdf5Base():
                 # print('DEBUG: Attribute: ', key, '   value: ', node._v_attrs[key])
                 metadata[key] = node._v_attrs[key]
         finally:
-            self.close()
+            if close:
+                self.close()
         return metadata
     
-    def set_user_metadata(self, nodepath, metadata={}):
+    def set_user_metadata(self, nodepath, metadata={}, close=True):
         """ """
         nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
         try:
             self.open(read_only=False)
             node = self.h5.get_node(nodepath)
             for key, value in metadata.items():
                 node._v_attrs[key] = value
         finally:
-            self.close()
+            if close:
+                self.close()
     
-    def clear_user_metadata(self, nodepath):
+    def clear_user_metadata(self, nodepath, close=True):
         """ """
         nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
         try:
             self.open(read_only=False)
             node = self.h5.get_node(nodepath)
@@ -147,14 +175,17 @@ class Hdf5Base():
                 self.h5.del_node_attr(node, key)
 #                 node._v_attrs(key)._g_remove()
         finally:
-            self.close()
+            if close:
+                self.close()
     
-    def remove(self, nodepath):
+    def remove(self, nodepath, recursive=False, close=True):
         """ Removes all types of nodes. """
         nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
         try:
             self.open(read_only=False)
-            self.h5.remove_node(nodepath, recursive=True)
+            self.h5.remove_node(nodepath, recursive=recursive)
         finally:
-            self.close()
+            if close:
+                self.close()
     

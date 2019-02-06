@@ -16,3 +16,4 @@ from hdf54bats.hdf5_detector import Hdf5Detector
 
 from hdf54bats.hdf5_wavefile import Hdf5Wavefile 
 
+from hdf54bats.hdf5_utils import str_to_ascii
