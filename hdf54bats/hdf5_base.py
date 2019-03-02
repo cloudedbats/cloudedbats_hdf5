@@ -70,6 +70,20 @@ class Hdf5Base():
                 self.close()
         return node_list       
     
+    def get_title(self, nodepath='', close=True):
+        """ """
+        title = ''
+        nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
+        try:
+            self.open(read_only=True)
+            node = self.h5.get_node(nodepath)
+            title = node._v_attrs['TITLE']
+        finally:
+            if close:
+                self.close()
+        return title       
+    
     def create_group(self, parents='', group_name='', group_title='', close=True):
         """ """
         parents = '/' + parents.replace('.', '/')
@@ -98,6 +112,17 @@ class Hdf5Base():
             self.open(read_only=False)
             self.h5.create_array(parents, array_name, array, 
                                  title=array_title, atom=atom)
+        finally:
+            if close:
+                self.close()
+        
+    def get_array(self, nodepath='', close=True):
+        """ """
+        nodepath = '/' + nodepath.replace('.', '/')
+        nodepath = nodepath.replace('//', '/')
+        try:
+            self.open(read_only=True)
+            return self.h5.get_node(nodepath)
         finally:
             if close:
                 self.close()
@@ -141,7 +166,7 @@ class Hdf5Base():
         nodepath = '/' + nodepath.replace('.', '/')
         nodepath = nodepath.replace('//', '/')
         try:
-            self.open(read_only=False)
+            self.open(read_only=True)
             node = self.h5.get_node(nodepath)
             for key in node._v_attrs._f_list('user'):
                 # print('DEBUG: Attribute: ', key, '   value: ', node._v_attrs[key])

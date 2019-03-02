@@ -37,24 +37,26 @@ class Hdf5Workspace():
                                     }
         return h5_dict
     
-    def get_h5_title(self, h5_name):
+    def get_h5_title(self, h5_name, close=True):
         """ """
         path = pathlib.Path(self.workspace_path, h5_name)
         h5 = tables.open_file(path, 'r')
         try:
             title = h5.get_node_attr('/', 'TITLE')
         finally:
-            h5.close()
+            if close:
+                h5.close()
         return title
     
-    def set_h5_title(self, h5_name, title):
+    def set_h5_title(self, h5_name, title, close=True):
         """ """
         path = pathlib.Path(self.workspace_path, h5_name)
         h5 = tables.open_file(path, 'a')
         try:
             title = h5.set_node_attr('/', 'TITLE', title)
         finally:
-            h5.close()
+            if close:
+                h5.close()
         return title
     
     def check_h5_file(self, h5_name=None):
@@ -76,7 +78,7 @@ class Hdf5Workspace():
         except:
             return False
     
-    def create_h5(self, h5_name=None, title=''):
+    def create_h5(self, h5_name=None, title='', close=True):
         """ """
         h5_path = pathlib.Path(self.workspace_path, h5_name)
         if h5_path.suffix != '.h5':
@@ -90,7 +92,8 @@ class Hdf5Workspace():
                 title = 'Survey: ' + h5_name.capitalize().replace('_', ' ')
                 h5.set_node_attr('/', 'TITLE', title)
         finally:
-            h5.close()
+            if close:
+                h5.close()
     
     def delete_h5(self, h5_name=None):
         """ """

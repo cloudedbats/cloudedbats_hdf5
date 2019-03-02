@@ -4,11 +4,6 @@
 # Copyright (c) 2018-2019 Arnold Andreasson 
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
-import pathlib
-import numpy as np
-import tables 
-import h5py 
-
 from . import hdf5_base
 
 class Hdf5Survey(hdf5_base.Hdf5Base):
@@ -21,7 +16,7 @@ class Hdf5Survey(hdf5_base.Hdf5Base):
         """ """
         return[]
     
-    def add_survey(self, parents='', name='', title=''):
+    def add_survey(self, parents='', name='', title='', close=True):
         """ 
             Note: Since there is one survey in each file all survey data is stored
             in the root group.
@@ -29,9 +24,9 @@ class Hdf5Survey(hdf5_base.Hdf5Base):
         if title == '':
             title = 'Survey: ' + name.capitalize().replace('_', ' ')
         #
-        self.create_group(parents=parents, node_name=name, node_title=title)
+        self.create_group(parents=parents, node_name=name, node_title=title, close=close)
     
-    def remove_survey(self, nodepath=''):
+    def remove_survey(self, nodepath='', close=True):
         """ 
             Note: Since there is one survey in each file all survey data is stored
             in the root group.
@@ -39,15 +34,15 @@ class Hdf5Survey(hdf5_base.Hdf5Base):
         """
         ### self.remove(nodepath=nodepath)
     
-    def get_user_metadata(self, nodepath=''):
+    def get_user_metadata(self, nodepath='', close=True):
         """ """
-        return super().get_user_metadata(nodepath=nodepath)
+        return super().get_user_metadata(nodepath=nodepath, close=close)
     
-    def set_user_metadata(self, nodepath='', metadata={}):
+    def set_user_metadata(self, nodepath='', metadata={}, close=True):
         """ """
-        super().set_user_metadata(nodepath=nodepath, metadata=metadata)
+        super().set_user_metadata(nodepath=nodepath, metadata=metadata, close=close)
     
-    def clear_user_metadata(self, nodepath=''):
+    def clear_user_metadata(self, nodepath='', close=True):
         """ """
-        super().clear_user_metadata(nodepath=nodepath)
+        super().clear_user_metadata(nodepath=nodepath, close=close)
     

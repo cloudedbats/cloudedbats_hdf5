@@ -10,7 +10,7 @@
 import numpy as np
 import hdf54bats
 
-ws = hdf54bats.Hdf5Workspace('workspace_test')
+ws = hdf54bats.Hdf5Workspace('workspace_test', create_ws=True)
 ws.delete_h5('first_test')
 ws.create_h5('first_test') # Not mandatory, will be created later.
 
