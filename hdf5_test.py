@@ -20,32 +20,33 @@ survey = hdf54bats.Hdf5Survey('workspace_test', 'first_test')
 # survey.add_survey('', 'dummy', 'DUMMY')
 # survey.remove_survey('dummy')
 
-event = hdf54bats.Hdf5Event('workspace_test', 'first_test')
-event.add_event('', 'first_event')
-event.add_event('', 'dummy', 'DUMMY')
-event.remove_event('dummy')
+events = hdf54bats.Hdf5Events('workspace_test', 'first_test')
+events.add_event('', 'first_event')
+events.add_event('', 'dummy', 'DUMMY')
+events.remove_event('dummy')
  
-detector = hdf54bats.Hdf5Detector('workspace_test', 'first_test')
-detector.add_detector('first_event', 'wurb1')
-detector.add_detector('first_event', 'dummy', 'DUMMY')
-detector.remove_detector('first_event.dummy')
+samples = hdf54bats.Hdf5Samples('workspace_test', 'first_test')
+samples.add_sample('first_event', 'wurb1')
+samples.add_sample('first_event', 'dummy', 'DUMMY')
+samples.remove_sample('first_event.dummy')
  
 array = np.ones(100).reshape(10, 10)
-wave = hdf54bats.Hdf5Wavefile('workspace_test', 'first_test')
-wave.add_wavefile('first_event.wurb1', 'wurb1_20180101', 'WURB1 20180101', array)
-wave.add_wavefile('first_event.wurb1', 'dummy', 'DUMMY', array)
+wave = hdf54bats.Hdf5Wavefiles('workspace_test', 'first_test')
+wave.add_wavefile('first_event.wurb1', 'wurb1_20180101', title='WURB1 20180101', array=array)
+wave.add_wavefile('first_event.wurb1', 'dummy', title='DUMMY', array=array)
 wave.remove_wavefile('first_event.wurb1.dummy')
  
 print('\nChildren: ')
-wave.get_children('')
+for item_id in wave.get_child_nodes(''):
+    print(item_id)
  
 print('\nMetadata: ')
-event.set_user_metadata('first_event', {'Aaa':'111', 'Bbb':'222'})
+events.set_user_metadata('first_event', {'Aaa':'111', 'Bbb':'222'})
 wave.set_user_metadata('first_event.wurb1', {'Ccc':'333', 'Ddd':'444'})
 wave.set_user_metadata('first_event.wurb1.wurb1_20180101', {'Eee':'555', 'Fff':'666'})
 
 print('\nMetadata first_event: ')
-for key, value in event.get_user_metadata('first_event').items():
+for key, value in events.get_user_metadata('first_event').items():
     print('- key first_event.wurb1: ', key, '   value: ', value)
 print('\nMetadata: ')
 for key, value in wave.get_user_metadata('first_event.wurb1').items():
@@ -60,7 +61,7 @@ for key, value in wave.get_user_metadata('first_event.wurb1.wurb1_20180101').ite
 
 ### Check format.
 print('\nFile format: ')
-valid_format = detector.check_file()
+valid_format = samples.check_file()
 if valid_format:
     print('- Valid file format.')
 else:
@@ -71,6 +72,14 @@ print('\nContent: ')
 import tables
 f = tables.open_file('workspace_test/first_test.h5', "r")
 print(f)
+
+for group in f.walk_groups():
+    print(group)
+    
+for key, group in survey.get_child_groups().items():
+    print(key, '   ', group)
+
+
 f.close()
 
 
