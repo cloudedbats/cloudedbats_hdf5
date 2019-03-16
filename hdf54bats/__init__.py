@@ -4,16 +4,16 @@
 # Project: CloudeBats.org
 # Source code: https://github.com/cloudedbats/cloudedbats_hdf5
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
-from hdf54bats.hdf5_workspace import Hdf5Workspace
+from hdf54bats.hdf5_workspace import Hdf5Workspace 
 
 from hdf54bats.hdf5_survey import Hdf5Survey 
 
-from hdf54bats.hdf5_event import Hdf5Event 
+from hdf54bats.hdf5_events import Hdf5Events 
 
-from hdf54bats.hdf5_detector import Hdf5Detector 
+from hdf54bats.hdf5_samples import Hdf5Samples 
 
-from hdf54bats.hdf5_wavefile import Hdf5Wavefile 
+from hdf54bats.hdf5_wavefiles import Hdf5Wavefiles 
 
-from hdf54bats.hdf5_utils import str_to_ascii
+from hdf54bats.hdf5_utils import str_to_ascii 
