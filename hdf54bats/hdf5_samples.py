@@ -12,9 +12,9 @@ class Hdf5Samples(hdf5_base.Hdf5Base):
         """ """
         super().__init__(h5_path, h5_name)
     
-    def add_sample(self, parent_id='', new_sample_name='', 
-                   item_type='sample', parent_sample_id='', 
-                   title='', close=True):
+    def add_sample(self, parent_id='', new_sample_name='', title='', 
+                   parent_sample_id='', item_type='sample', 
+                   close=True):
         """ """
         if title == '':
             title = 'Sample: ' + new_sample_name.capitalize().replace('_', ' ')

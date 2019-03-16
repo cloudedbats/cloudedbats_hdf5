@@ -12,9 +12,9 @@ class Hdf5Events(hdf5_base.Hdf5Base):
         """ """
         super().__init__(h5_path, h5_name)
     
-    def add_event(self, parent_id='', new_event_name='', 
-                  item_type='event', parent_event_id='', 
-                  title='', close=True):
+    def add_event(self, parent_id='', new_event_name='', title='', 
+                  parent_event_id='', item_type='event', 
+                  close=True):
         """ """
         if title == '':
             title = 'Event: ' + new_event_name.capitalize().replace('_', ' ')
