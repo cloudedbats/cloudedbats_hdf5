@@ -179,23 +179,42 @@ class Hdf5Base():
 #             if close:
 #                 self.close()
     
-#     def add_table(self, parent_id='', new_table_name='', item_title='', close=True):
+#     def add_table(self, parent_id, new_table_name='', table=None, 
+#                   item_title='', atom=None, close=True):
 #         """ """
 #         parent_id = '/' + parent_id.replace('.', '/')
-#         if new_table_name:
-#             new_table_name = hdf54bats.str_to_ascii(new_table_name)
+#         parent_id = parent_id.replace('//', '/')
+#         if new_array_name:
+#             new_array_name = hdf54bats.str_to_ascii(new_array_name)
 #         else:
 #             # Use title if name not given.
-#             new_table_name = hdf54bats.str_to_ascii(item_title)
+#             new_array_name = hdf54bats.str_to_ascii(item_title)
 #         try:
 #             self.open(read_only=False)
-#              
-#             # TODO:
-#                          
+#             self.h5.create_table(where, name, description, title, filters, expectedrows, chunkshape, byteorder, createparents, obj, track_times)
+#             
+#             self.h5.create_array(where, name, obj, title, byteorder, createparents, atom, shape, track_times)
+#             
+# #             self.h5.create_array(parent_id, new_array_name, array, 
+# #                                  title=item_title, atom=atom)
 #         finally:
 #             if close:
 #                 self.close()
-    
+#         #
+#         new_id = parent_id + '/' + new_array_name
+#         return new_id.replace('/', '.')
+#     
+#     def get_table(self, item_id='', close=True):
+#         """ """
+#         item_id = '/' + item_id.replace('.', '/')
+#         item_id = item_id.replace('//', '/')
+#         try:
+#             self.open(read_only=True)
+#             return self.h5.get_node(item_id)
+#         finally:
+#             if close:
+#                 self.close()
+#     
     def get_user_metadata(self, item_id='', close=True):
         """ """
         metadata = {}
