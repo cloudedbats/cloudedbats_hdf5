@@ -102,9 +102,28 @@ class Hdf5Wavefiles(hdf5_samples.Hdf5Samples):
             self.open(read_only=True)
             table =  self.h5.get_node(table_id)
             
-            for row in table:
-                print('DEBUG: ', row)
+#             test_arr = [ table_row['type'] for table_row in table ]
+#             print(test_arr)
+#             test_arr = [ table_row['time_s'] for table_row in table ]
+#             print(test_arr)
+#             test_arr = [ table_row['amp_dbfs'] for table_row in table ]
+#             print(test_arr)
             
+            result_dict = {}
+            
+#             result_dict['type'] = []
+            result_dict['time_s'] = [ table_row['time_s'] for table_row in table 
+                                      if table_row['type'] == b'1' and table_row['amp_dbfs'] > -100.0 ]
+            result_dict['freq_khz'] = [ table_row['freq_khz'] for table_row in table 
+                                      if table_row['type'] == b'1' and table_row['amp_dbfs'] > -100.0 ]
+            result_dict['amp_dbfs'] = [ table_row['amp_dbfs'] for table_row in table 
+                                      if table_row['type'] == b'1' and table_row['amp_dbfs'] > -100.0 ]
+#             result_dict['pulse_ix'] = []
+#             result_dict['info_key'] = []
+#             result_dict['info_value'] = []
+            #
+            return result_dict
+        
         finally:
             if close:
                 self.close()
