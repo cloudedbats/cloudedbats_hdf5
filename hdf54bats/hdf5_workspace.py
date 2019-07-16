@@ -26,7 +26,7 @@ class Hdf5Workspace():
         for h5_file in ws_path.glob('*.h5'):
             filepath = pathlib.Path(h5_file).resolve()
             title = ''
-            h5 = tables.open_file(h5_file, 'r')
+            h5 = tables.open_file(str(h5_file), 'r')
             try:
                 title = h5.get_node_attr('/', 'TITLE')
             finally:
@@ -40,7 +40,7 @@ class Hdf5Workspace():
     def get_h5_title(self, h5_name, close=True):
         """ Gets the survey title that corresponds to the file. """
         path = pathlib.Path(self.workspace_path, h5_name)
-        h5 = tables.open_file(path, 'r')
+        h5 = tables.open_file(str(path), 'r')
         try:
             title = h5.get_node_attr('/', 'TITLE')
         finally:
@@ -51,7 +51,7 @@ class Hdf5Workspace():
     def set_h5_title(self, h5_name, title, close=True):
         """ Sets the survey title that corresponds to the file. """
         path = pathlib.Path(self.workspace_path, h5_name)
-        h5 = tables.open_file(path, 'a')
+        h5 = tables.open_file(str(path), 'a')
         try:
             title = h5.set_node_attr('/', 'TITLE', title)
         finally:
@@ -65,9 +65,9 @@ class Hdf5Workspace():
         if h5_path.suffix != '.h5':
             h5_path = h5_path.with_suffix('.h5')
         try:
-            valid_file = tables.is_hdf5_file(h5_path)
+            valid_file = tables.is_hdf5_file(str(h5_path))
             if valid_file:
-                pytables_version = tables.is_pytables_file(h5_path)
+                pytables_version = tables.is_pytables_file(str(h5_path))
                 if pytables_version is None:
                     return False
                 else:
@@ -83,7 +83,7 @@ class Hdf5Workspace():
         h5_path = pathlib.Path(self.workspace_path, h5_name)
         if h5_path.suffix != '.h5':
             h5_path = h5_path.with_suffix('.h5')
-        h5 = tables.open_file(h5_path, "a")
+        h5 = tables.open_file(str(h5_path), "a")
         try:
             h5.set_node_attr('/', 'item_type', 'survey')
             if title:
@@ -113,7 +113,7 @@ class Hdf5Workspace():
         if h5_dest.suffix != '.h5':
             h5_dest = h5_dest.with_suffix('.h5')
         #
-        tables.copy_file(h5_src, h5_dest)
+        tables.copy_file(str(h5_src), str(h5_dest))
     
     def rename_h5(self, from_h5_name=None, to_h5_name=None):
         """ Renames a file. """

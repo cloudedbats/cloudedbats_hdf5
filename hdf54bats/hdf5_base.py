@@ -24,7 +24,7 @@ class Hdf5Base():
         mode = 'r' if read_only else 'a'
         try:
             if self.h5 is None:
-                self.h5 = tables.open_file(self.h5_path, mode)
+                self.h5 = tables.open_file(str(self.h5_path), mode)
         except Exception as e:
             print('Failed to open HDF5 file. Exception: ', e)
             self.h5 = None
@@ -40,9 +40,9 @@ class Hdf5Base():
     def check_file(self):
         """ Checks if the file is a valid HDF5/PyTables file. """
         try:
-            valid_file = tables.is_hdf5_file(self.h5_path)
+            valid_file = tables.is_hdf5_file(str(self.h5_path))
             if valid_file:
-                pytables_version = tables.is_pytables_file(self.h5_path)
+                pytables_version = tables.is_pytables_file(str(self.h5_path))
                 if pytables_version is None:
                     return False
                 else:
