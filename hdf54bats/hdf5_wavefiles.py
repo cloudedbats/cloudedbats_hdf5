@@ -58,9 +58,6 @@ class Hdf5Wavefiles(hdf5_samples.Hdf5Samples):
         """ """
         self.remove(item_id=item_id, recursive=recursive, close=close)
     
-    
-    
-    
     def add_pulse_peaks_table(self, wavefile_id, result_table):
         """ """
         wavefile_id = '/' + wavefile_id.replace('.', '/')
@@ -99,37 +96,30 @@ class Hdf5Wavefiles(hdf5_samples.Hdf5Samples):
         table_id = '/' + wavefile_id.replace('.', '/') + '/pulse_peaks'
         table_id = table_id.replace('//', '/')
         try:
-            self.open(read_only=True)
-            table =  self.h5.get_node(table_id)
+            try:
+                self.open(read_only=True)
+                table =  self.h5.get_node(table_id)
+                table_cache = table.read()
+                #
+                result_dict = {}
+                result_dict['time_s'] = []
+                result_dict['freq_khz'] = []
+                result_dict['amp_dbfs'] = []
+                for table_row in table_cache:
+                    if table_row[0] == b'1':
+                        if table_row[3] > -100.0:
+                            result_dict['time_s'].append(table_row[1])
+                            result_dict['freq_khz'].append(table_row[2])
+                            result_dict['amp_dbfs'].append(table_row[3])
+                #
+                return result_dict
             
-#             test_arr = [ table_row['type'] for table_row in table ]
-#             print(test_arr)
-#             test_arr = [ table_row['time_s'] for table_row in table ]
-#             print(test_arr)
-#             test_arr = [ table_row['amp_dbfs'] for table_row in table ]
-#             print(test_arr)
-            
-            result_dict = {}
-            
-#             result_dict['type'] = []
-            result_dict['time_s'] = [ table_row['time_s'] for table_row in table 
-                                      if table_row['type'] == b'1' and table_row['amp_dbfs'] > -100.0 ]
-            result_dict['freq_khz'] = [ table_row['freq_khz'] for table_row in table 
-                                      if table_row['type'] == b'1' and table_row['amp_dbfs'] > -100.0 ]
-            result_dict['amp_dbfs'] = [ table_row['amp_dbfs'] for table_row in table 
-                                      if table_row['type'] == b'1' and table_row['amp_dbfs'] > -100.0 ]
-#             result_dict['pulse_ix'] = []
-#             result_dict['info_key'] = []
-#             result_dict['info_value'] = []
-            #
-            return result_dict
-        
-        finally:
-            if close:
-                self.close()
-    
-    
-    
+            finally:
+                if close:
+                    self.close()
+        except Exception as e:
+            print('DEBUG Exception: ', e)
+
 
 class PulsePeaks(tables.IsDescription):
     """ 
