@@ -12,8 +12,6 @@ setup(name='hdf54bats',
     packages=['hdf54bats'],
     install_requires=[
         'numpy', 
-        'pandas', 
-        'h5py', 
         'tables', 
     ],
     zip_safe=False)

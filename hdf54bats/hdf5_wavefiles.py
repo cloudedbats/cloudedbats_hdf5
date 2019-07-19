@@ -17,51 +17,41 @@ class Hdf5Wavefiles(hdf5_samples.Hdf5Samples):
     
     def add_wavefile(self, parent_id='', new_name='', title='', 
                      parent_sample_id='', item_type='wavefile', 
-                     array=numpy.arange(1), 
-                     close=True):
+                     array=numpy.arange(1)):
         """ """
-        try:
-            if title == '':
-                title = 'Wavefile: ' + new_name.capitalize().replace('_', ' ')
-            # Add sample of type wavefile first.
-            new_id = super().add_sample(parent_id, new_name, title, 
-                                        parent_sample_id=parent_sample_id, 
-                                        item_type=item_type, close=False)
-            # Then add the signal array to the sample.
-            self.add_array(parent_id=new_id, new_array_name='signal', 
-                           item_title=title, array=array, close=False)
-    #                        atom=atom_int16)
-            metadata = {}
-            metadata['item_type'] = item_type
-            self.set_user_metadata(new_id, metadata, close=False)
-            # Save to hdf5 file.
-        finally:
-            if close:
-                self.close()
-        # Flush the array if not closed.
-        if not close:
-            self.h5.flush()
+        if title == '':
+            title = 'Wavefile: ' + new_name.capitalize().replace('_', ' ')
+        # Add sample of type wavefile first.
+        new_id = super().add_sample(parent_id, new_name, title, 
+                                    parent_sample_id=parent_sample_id, 
+                                    item_type=item_type)
+        # Then add the signal array to the sample.
+        self.add_array(parent_id=new_id, new_array_name='signal', 
+                       item_title=title, array=array)
+#                        atom=atom_int16)
+        metadata = {}
+        metadata['item_type'] = item_type
+        self.set_user_metadata(new_id, metadata)
         #
         return new_id
     
-    def get_wavefile(self, item_id='', close=True):
+    def get_wavefile(self, item_id=''):
         """ """
         item_id = item_id + '.signal'
-        array_object = self.get_array(item_id=item_id, close=False, )
-        array = array_object.read()
+        array = self.get_array(item_id=item_id)
         #
-        if close:
-            self.close()
         return array
     
-    def remove_wavefile(self, item_id='', recursive=True, close=True):
+    def remove_wavefile(self, item_id='', recursive=True):
         """ """
-        self.remove(item_id=item_id, recursive=recursive, close=close)
+        self.remove(item_id=item_id, recursive=recursive)
     
     def add_pulse_peaks_table(self, wavefile_id, result_table):
         """ """
         wavefile_id = '/' + wavefile_id.replace('.', '/')
         wavefile_id = wavefile_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=False)
             # 
@@ -87,43 +77,44 @@ class Hdf5Wavefiles(hdf5_samples.Hdf5Samples):
                 table_row.append()
                 # 
             table.flush
-            # 
+        # 
         finally:
             self.close()
+            self.lock.release()
     
-    def get_pulse_peaks_table(self, wavefile_id='', close=True):
+    def get_pulse_peaks_table(self, wavefile_id=''):
         """ """
         table_id = '/' + wavefile_id.replace('.', '/') + '/pulse_peaks'
         table_id = table_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
-            try:
-                self.open(read_only=True)
-                table =  self.h5.get_node(table_id)
-                table_cache = table.read()
-                #
-                result_dict = {}
-                result_dict['time_s'] = []
-                result_dict['freq_khz'] = []
-                result_dict['amp_dbfs'] = []
-                for table_row in table_cache:
-                    if table_row[0] == b'1':
-                        if table_row[3] > -100.0:
-                            result_dict['time_s'].append(table_row[1])
-                            result_dict['freq_khz'].append(table_row[2])
-                            result_dict['amp_dbfs'].append(table_row[3])
-                #
-                return result_dict
-            
-            finally:
-                if close:
-                    self.close()
-        except Exception as e:
-            print('DEBUG Exception: ', e)
+            self.open(read_only=True)
+            table =  self.h5.get_node(table_id)
+            table_cache = table.read()
+        # 
+        finally:
+            self.close()
+            self.lock.release()
+        #
+        result_dict = {}
+        result_dict['time_s'] = []
+        result_dict['freq_khz'] = []
+        result_dict['amp_dbfs'] = []
+        result_dict['pulse_ix'] = []
+        for table_row in table_cache:
+            if table_row[0] == b'1':
+                if table_row[3] > -100.0:
+                    result_dict['time_s'].append(table_row[1])
+                    result_dict['freq_khz'].append(table_row[2])
+                    result_dict['amp_dbfs'].append(table_row[3])
+                    result_dict['pulse_ix'].append(table_row[4])
+        #
+        return result_dict
 
 
 class PulsePeaks(tables.IsDescription):
-    """ 
-        Header: 'type', 'time_s', 'freq_khz', 'amp_dbfs', 'pulse_ix', 'info_key', 'info_value'
+    """ Header: 'type', 'time_s', 'freq_khz', 'amp_dbfs', 'pulse_ix', 'info_key', 'info_value'
     """
     type = tables.StringCol(itemsize=5, dflt='', pos = 0)
     time_s = tables.Float32Col(dflt=numpy.nan, pos=1)

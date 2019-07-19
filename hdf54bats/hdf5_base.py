@@ -5,6 +5,7 @@
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import pathlib
+import threading
 import tables
 import hdf54bats
 
@@ -18,6 +19,8 @@ class Hdf5Base():
             self.h5_path = self.h5_path.with_suffix('.h5')
         # The HDF5 file.
         self.h5 = None
+        # Lock used for concurrency reasons.
+        self.lock = threading.Lock()
     
     def open(self, read_only=True):
         """ """
@@ -28,35 +31,42 @@ class Hdf5Base():
         except Exception as e:
             print('Failed to open HDF5 file. Exception: ', e)
             self.h5 = None
+            raise
     
     def close(self):
         """ """
-        if self.h5 is not None:
-            try:
+        try:
+            if self.h5 is not None:
                 self.h5.close()
-            finally:
-                self.h5 = None
+        finally:
+            self.h5 = None
     
     def check_file(self):
         """ Checks if the file is a valid HDF5/PyTables file. """
+        self.lock.acquire(timeout=2)
         try:
-            valid_file = tables.is_hdf5_file(str(self.h5_path))
-            if valid_file:
-                pytables_version = tables.is_pytables_file(str(self.h5_path))
-                if pytables_version is None:
-                    return False
+            try:
+                valid_file = tables.is_hdf5_file(str(self.h5_path))
+                if valid_file:
+                    pytables_version = tables.is_pytables_file(str(self.h5_path))
+                    if pytables_version is None:
+                        return False
+                    else:
+                        return True
                 else:
-                    return True
-            else:
+                    return False
+            except:
                 return False
-        except:
-            return False
+        finally:
+            self.lock.release()
     
-    def get_child_groups(self, item_id='', close=True):
+    def get_child_groups(self, item_id=''):
         """ """
         groups_dict = {}
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=True)
             for group in self.h5.walk_groups(item_id): 
@@ -69,16 +79,19 @@ class Hdf5Base():
                 try: group_dict['item_type'] = group._v_attrs['item_type']
                 except: group_dict['name'] = ''
                 groups_dict[item_id] = group_dict
+            #
+            return groups_dict
         finally:
-            if close:
-                self.close()
-        return groups_dict       
+            self.close()
+            self.lock.release()
     
-    def get_child_nodes(self, item_id='', close=True):
+    def get_child_nodes(self, item_id=''):
         """ """
         nodes_dict = {}
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=True)
             for node in self.h5.walk_nodes(item_id): 
@@ -91,26 +104,28 @@ class Hdf5Base():
                 try: node_dict['item_type'] = node._v_attrs['item_type']
                 except: node_dict['name'] = ''
                 nodes_dict[item_id] = node_dict
+            return nodes_dict       
         finally:
-            if close:
-                self.close()
-        return nodes_dict       
+            self.close()
+            self.lock.release()
     
-    def get_item_title(self, item_id='', close=True):
+    def get_item_title(self, item_id=''):
         """ """
         item_title = ''
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=True)
             node = self.h5.get_node(item_id)
             item_title = node._v_attrs['TITLE']
+            return item_title
         finally:
-            if close:
-                self.close()
-        return item_title       
+            self.close()
+            self.lock.release()
     
-    def create_group(self, parent_id='', new_group_name='', item_title='', close=True):
+    def create_group(self, parent_id='', new_group_name='', item_title=''):
         """ """
         parent_id = '/' + parent_id.replace('.', '/')
         parent_id = parent_id.replace('//', '/')
@@ -119,18 +134,20 @@ class Hdf5Base():
         else:
             # Use title if name not given.
             new_group_name = hdf54bats.str_to_ascii(item_title)
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=False)
             self.h5.create_group(parent_id, new_group_name, item_title, createparents=False)
+            #
+            new_id = parent_id + '/' + new_group_name
+            return new_id.replace('/', '.')
         finally:
-            if close:
-                self.close()
-        #
-        new_id = parent_id + '/' + new_group_name
-        return new_id.replace('/', '.')
+            self.close()
+            self.lock.release()
     
     def add_array(self, parent_id, new_array_name='', array=None, 
-                  item_title='', atom=None, close=True):
+                  item_title='', atom=None):
         """ """
         parent_id = '/' + parent_id.replace('.', '/')
         parent_id = parent_id.replace('//', '/')
@@ -139,132 +156,92 @@ class Hdf5Base():
         else:
             # Use title if name not given.
             new_array_name = hdf54bats.str_to_ascii(item_title)
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=False)
             self.h5.create_array(parent_id, new_array_name, array, 
                                  title=item_title, atom=atom)
+            #
+            new_id = parent_id + '/' + new_array_name
+            return new_id.replace('/', '.')
         finally:
-            if close:
-                self.close()
-        #
-        new_id = parent_id + '/' + new_array_name
-        return new_id.replace('/', '.')
-        
-    def get_array(self, item_id='', close=True):
+            self.close()
+            self.lock.release()
+    
+    def get_array(self, item_id=''):
         """ """
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=True)
-            return self.h5.get_node(item_id)
+            array_object = self.h5.get_node(item_id)
+            return array_object.read()
         finally:
-            if close:
-                self.close()
-        
-#     def add_dataset(self, parent_id='', new_dataset_name='', item_title='', close=True):
-#         """ """
-#         parent_id = '/' + parent_id.replace('.', '/')
-#         parent_id = parent_id.replace('//', '/')
-#         if new_dataset_name:
-#             new_dataset_name = hdf54bats.str_to_ascii(new_dataset_name)
-#         else:
-#             # Use title if name not given.
-#             new_dataset_name = hdf54bats.str_to_ascii(item_title)
-#         try:
-#             self.open(read_only=False)
-#              
-#             # TODO:
-#              
-#         finally:
-#             if close:
-#                 self.close()
+            self.close()
+            self.lock.release()
     
-#     def add_table(self, parent_id, new_table_name='', table=None, 
-#                   item_title='', atom=None, close=True):
-#         """ """
-#         parent_id = '/' + parent_id.replace('.', '/')
-#         parent_id = parent_id.replace('//', '/')
-#         if new_array_name:
-#             new_array_name = hdf54bats.str_to_ascii(new_array_name)
-#         else:
-#             # Use title if name not given.
-#             new_array_name = hdf54bats.str_to_ascii(item_title)
-#         try:
-#             self.open(read_only=False)
-#             self.h5.create_table(where, name, description, title, filters, expectedrows, chunkshape, byteorder, createparents, obj, track_times)
-#             
-#             self.h5.create_array(where, name, obj, title, byteorder, createparents, atom, shape, track_times)
-#             
-# #             self.h5.create_array(parent_id, new_array_name, array, 
-# #                                  title=item_title, atom=atom)
-#         finally:
-#             if close:
-#                 self.close()
-#         #
-#         new_id = parent_id + '/' + new_array_name
-#         return new_id.replace('/', '.')
-#     
-#     def get_table(self, item_id='', close=True):
-#         """ """
-#         item_id = '/' + item_id.replace('.', '/')
-#         item_id = item_id.replace('//', '/')
-#         try:
-#             self.open(read_only=True)
-#             return self.h5.get_node(item_id)
-#         finally:
-#             if close:
-#                 self.close()
-#     
-    def get_user_metadata(self, item_id='', close=True):
+    def get_user_metadata(self, item_id=''):
         """ """
         metadata = {}
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=True)
             node = self.h5.get_node(item_id)
             for key in node._v_attrs._f_list('user'):
                 # print('DEBUG: Attribute: ', key, '   value: ', node._v_attrs[key])
                 metadata[key] = node._v_attrs[key]
+            #
+            return metadata
         finally:
-            if close:
-                self.close()
-        return metadata
+            self.close()
+            self.lock.release()
     
-    def set_user_metadata(self, item_id, metadata={}, close=True):
+    def set_user_metadata(self, item_id, metadata={}):
         """ """
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=False)
             node = self.h5.get_node(item_id)
             for key, value in metadata.items():
                 node._v_attrs[key] = value
         finally:
-            if close:
-                self.close()
+            self.close()
+            self.lock.release()
     
-    def clear_user_metadata(self, item_id, close=True):
+    def clear_user_metadata(self, item_id):
         """ """
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=False)
             node = self.h5.get_node(item_id)
             for key in node._v_attrs._f_list('user'):
                 self.h5.del_node_attr(node, key)
         finally:
-            if close:
-                self.close()
+            self.close()
+            self.lock.release()
     
-    def remove(self, item_id, recursive=False, close=True):
+    def remove(self, item_id, recursive=False):
         """ Removes all types of nodes. """
         item_id = '/' + item_id.replace('.', '/')
         item_id = item_id.replace('//', '/')
+        #
+        self.lock.acquire(timeout=2)
         try:
             self.open(read_only=False)
             self.h5.remove_node(item_id, recursive=recursive)
         finally:
-            if close:
-                self.close()
+            self.close()
+            self.lock.release()
     

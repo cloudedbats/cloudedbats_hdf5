@@ -5,6 +5,7 @@
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import pathlib
+import threading
 import tables 
 
 class Hdf5Workspace():
@@ -18,46 +19,54 @@ class Hdf5Workspace():
             # Create workspace if it does not exist.
             ws_path = pathlib.Path(self.workspace_path)
             ws_path.mkdir(parents=True, exist_ok=True)
+        #
+        self.lock = threading.Lock()
     
     def get_h5_list(self):
         """ Returns a dictionary with filename as key. """
         h5_dict = {}
-        ws_path = pathlib.Path(self.workspace_path)
-        for h5_file in ws_path.glob('*.h5'):
-            filepath = pathlib.Path(h5_file).resolve()
-            title = ''
-            h5 = tables.open_file(str(h5_file), 'r')
-            try:
+        self.lock.acquire(timeout=2)
+        try:
+            ws_path = pathlib.Path(self.workspace_path)
+            for h5_file in ws_path.glob('*.h5'):
+                filepath = pathlib.Path(h5_file).resolve()
+                title = ''
+                h5 = tables.open_file(str(h5_file), 'r')
                 title = h5.get_node_attr('/', 'TITLE')
-            finally:
-                h5.close()
-            h5_dict[h5_file.name] = {'name': h5_file.name, 
-                                     'title': title, 
-                                     'f5_filepath': filepath
-                                    }
-        return h5_dict
+                h5_dict[h5_file.name] = {'name': h5_file.name, 
+                                         'title': title, 
+                                         'f5_filepath': filepath
+                                        }
+            return h5_dict
+        finally:
+            h5.close()
+            self.lock.release()
     
-    def get_h5_title(self, h5_name, close=True):
+    def get_h5_title(self, h5_name):
         """ Gets the survey title that corresponds to the file. """
         path = pathlib.Path(self.workspace_path, h5_name)
-        h5 = tables.open_file(str(path), 'r')
+        #
+        self.lock.acquire(timeout=2)
         try:
+            h5 = tables.open_file(str(path), 'r')
             title = h5.get_node_attr('/', 'TITLE')
+            return title
         finally:
-            if close:
-                h5.close()
-        return title
+            h5.close()
+            self.lock.release()
     
-    def set_h5_title(self, h5_name, title, close=True):
+    def set_h5_title(self, h5_name, title):
         """ Sets the survey title that corresponds to the file. """
         path = pathlib.Path(self.workspace_path, h5_name)
-        h5 = tables.open_file(str(path), 'a')
+        #
+        self.lock.acquire(timeout=2)
         try:
+            h5 = tables.open_file(str(path), 'a')
             title = h5.set_node_attr('/', 'TITLE', title)
+            return title
         finally:
-            if close:
-                h5.close()
-        return title
+            h5.close()
+            self.lock.release()
     
     def check_h5_file(self, h5_name=None):
         """ Checks if it is a valid HDF5/PyTables file. """
@@ -78,11 +87,13 @@ class Hdf5Workspace():
         except:
             return False
     
-    def create_h5(self, h5_name=None, title='', close=True):
+    def create_h5(self, h5_name=None, title=''):
         """ Creats a new file representing a survey. """
         h5_path = pathlib.Path(self.workspace_path, h5_name)
         if h5_path.suffix != '.h5':
             h5_path = h5_path.with_suffix('.h5')
+        #
+        self.lock.acquire(timeout=2)
         h5 = tables.open_file(str(h5_path), "a")
         try:
             h5.set_node_attr('/', 'item_type', 'survey')
@@ -93,8 +104,8 @@ class Hdf5Workspace():
                 title = 'Survey: ' + h5_name.capitalize().replace('_', ' ')
                 h5.set_node_attr('/', 'TITLE', title)
         finally:
-            if close:
-                h5.close()
+            h5.close()
+            self.lock.release()
     
     def delete_h5(self, h5_name=None):
         """ Deleting a file. """

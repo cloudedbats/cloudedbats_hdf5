@@ -4,7 +4,7 @@
 # Project: CloudeBats.org
 # Source code: https://github.com/cloudedbats/cloudedbats_hdf5
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 from hdf54bats.hdf5_workspace import Hdf5Workspace 
 
