@@ -31,15 +31,18 @@ class Hdf5Workspace():
             for h5_file in ws_path.glob('*.h5'):
                 filepath = pathlib.Path(h5_file).resolve()
                 title = ''
-                h5 = tables.open_file(str(h5_file), 'r')
-                title = h5.get_node_attr('/', 'TITLE')
-                h5_dict[h5_file.name] = {'name': h5_file.name, 
-                                         'title': title, 
-                                         'f5_filepath': filepath
-                                        }
+                try:
+                    h5 = tables.open_file(str(h5_file), 'r')
+                    title = h5.get_node_attr('/', 'TITLE')
+                    h5_dict[h5_file.name] = {'name': h5_file.name, 
+                                             'title': title, 
+                                             'f5_filepath': filepath
+                                            }
+                finally:
+                    h5.close()
+            #
             return h5_dict
         finally:
-            h5.close()
             self.lock.release()
     
     def get_h5_title(self, h5_name):
