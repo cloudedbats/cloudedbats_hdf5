@@ -29,7 +29,7 @@ class Hdf5Workspace():
         try:
             ws_path = pathlib.Path(self.workspace_path)
             for h5_file in ws_path.glob('*.h5'):
-                filepath = pathlib.Path(h5_file).resolve()
+                filepath = str(pathlib.Path(h5_file).resolve())
                 title = ''
                 try:
                     h5 = tables.open_file(str(h5_file), 'r')
