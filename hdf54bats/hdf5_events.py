@@ -12,14 +12,14 @@ class Hdf5Events(hdf5_base.Hdf5Base):
         """ """
         super().__init__(h5_path, h5_name)
     
-    def add_event(self, parent_id='', new_event_name='', title='', 
+    def add_event(self, parent_id='', node_id='', title='', 
                   parent_event_id='', item_type='event'):
         """ """
         if title == '':
-            title = 'Event: ' + new_event_name.capitalize().replace('_', ' ')
+            title = 'Event: ' + node_id.capitalize().replace('_', ' ')
         #
         new_id = self.create_group(parent_id=parent_id, 
-                                   new_group_name=new_event_name, 
+                                   node_id=node_id, 
                                    item_title=title)
         metadata = {}
         metadata['item_type'] = item_type

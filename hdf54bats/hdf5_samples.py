@@ -12,16 +12,17 @@ class Hdf5Samples(hdf5_base.Hdf5Base):
         """ """
         super().__init__(h5_path, h5_name)
     
-    def add_sample(self, parent_id='', new_sample_name='', title='', 
-                   parent_sample_id='', item_type='sample'):
+    def add_sample(self, parent_id='', node_id='', title='', 
+                   parent_sample_id='', item_type='sample',
+                   metadata = {}):
         """ """
         if title == '':
-            title = 'Sample: ' + new_sample_name.capitalize().replace('_', ' ')
-        #
+            title = 'Sample: ' + node_id.capitalize().replace('_', ' ')
+        # Sample group.
         new_id = self.create_group(parent_id=parent_id, 
-                                   new_group_name=new_sample_name, 
+                                   node_id=node_id, 
                                    item_title=title)
-        metadata = {}
+        # Metadata.
         metadata['item_type'] = item_type
         metadata['parent_sample_id'] = parent_sample_id
         self.set_user_metadata(new_id, metadata)

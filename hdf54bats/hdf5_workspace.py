@@ -29,7 +29,7 @@ class Hdf5Workspace():
         try:
             ws_path = pathlib.Path(self.workspace_path)
             for h5_file in ws_path.glob('*.h5'):
-                filepath = str(pathlib.Path(h5_file).resolve())
+                filepath = pathlib.Path(h5_file).resolve()
                 title = ''
                 try:
                     h5 = tables.open_file(str(h5_file), 'r')
@@ -139,32 +139,4 @@ class Hdf5Workspace():
             h5_dest = h5_dest.with_suffix('.h5')
         #
         h5_src.rename(h5_dest)
-    
-
-### Test ###
-# if __name__ == '__main__':
-#     """ """
-#     import time
-#     print('\nCloudedBats - HDF5 - test')
-#     ws = Hdf5Workspace(workspace_path='../workspace_test')
-#     time.sleep(1)
-#     ws.create_h5('h5_test')
-#     time.sleep(1)
-#     ws.copy_h5('h5_test', 'h5_test_1.h5')
-#     time.sleep(1)
-#     ws.rename_h5('h5_test_1', 'h5_test_2')
-#     time.sleep(1)
-#     print('\nCheck file: ')
-#     print(' - Check: ', ws.check_h5_file('h5_test_2'))
-#     print('\nBefore delete: ')
-#     for filename in ws.get_h5_list():
-#         print(' - ', filename)
-#     time.sleep(1)
-#     ws.delete_h5('h5_test')
-#     time.sleep(1)
-#     ws.delete_h5('h5_test_2.h5')
-#     print('\nAfter delete: ')
-#     for filename in ws.get_h5_list():
-#         print(' - ', filename)
-
     
