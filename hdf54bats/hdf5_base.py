@@ -238,7 +238,7 @@ class Hdf5Base():
         #
         self.lock.acquire(timeout=2)
         try:
-            self.open(read_only=False)
+            self.open(read_only=True)
             exists = self.h5.__contains__(item_id)
             return exists
         finally:

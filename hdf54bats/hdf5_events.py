@@ -24,7 +24,7 @@ class Hdf5Events(hdf5_base.Hdf5Base):
         metadata = {}
         metadata['item_type'] = item_type
         metadata['parent_event_id'] = parent_event_id
-        self.set_user_metadata(new_id, metadata)
+        self.set_user_metadata(new_id, metadata=metadata)
         #
         return new_id
 

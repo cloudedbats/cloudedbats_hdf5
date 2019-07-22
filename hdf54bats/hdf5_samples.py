@@ -25,7 +25,7 @@ class Hdf5Samples(hdf5_base.Hdf5Base):
         # Metadata.
         metadata['item_type'] = item_type
         metadata['parent_sample_id'] = parent_sample_id
-        self.set_user_metadata(new_id, metadata)
+        self.set_user_metadata(new_id, metadata=metadata)
         #
         return new_id
     
